@@ -10,6 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AnalysisRouteImport } from './routes/analysis'
+import { Route as HistoryRouteImport } from './routes/history'
+import { Route as LearningRouteImport } from './routes/learning'
+import { Route as MemoryRouteImport } from './routes/memory'
+import { Route as NewRouteImport } from './routes/new'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiStatsRouteImport } from './routes/api/stats'
 import { Route as ApiIncidentsIndexRouteImport } from './routes/api/incidents/index'
@@ -22,6 +27,31 @@ import { Route as ApiMemorySeedRouteImport } from './routes/api/memory/seed'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalysisRoute = AnalysisRouteImport.update({
+  id: '/analysis',
+  path: '/analysis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LearningRoute = LearningRouteImport.update({
+  id: '/learning',
+  path: '/learning',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MemoryRoute = MemoryRouteImport.update({
+  id: '/memory',
+  path: '/memory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewRoute = NewRouteImport.update({
+  id: '/new',
+  path: '/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
@@ -67,6 +97,11 @@ const ApiMemorySeedRoute = ApiMemorySeedRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analysis': typeof AnalysisRoute
+  '/history': typeof HistoryRoute
+  '/learning': typeof LearningRoute
+  '/memory': typeof MemoryRoute
+  '/new': typeof NewRoute
   '/api/health': typeof ApiHealthRoute
   '/api/stats': typeof ApiStatsRoute
   '/api/incidents/analyze': typeof ApiIncidentsAnalyzeRoute
@@ -78,6 +113,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analysis': typeof AnalysisRoute
+  '/history': typeof HistoryRoute
+  '/learning': typeof LearningRoute
+  '/memory': typeof MemoryRoute
+  '/new': typeof NewRoute
   '/api/health': typeof ApiHealthRoute
   '/api/stats': typeof ApiStatsRoute
   '/api/incidents/analyze': typeof ApiIncidentsAnalyzeRoute
@@ -90,6 +130,11 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analysis': typeof AnalysisRoute
+  '/history': typeof HistoryRoute
+  '/learning': typeof LearningRoute
+  '/memory': typeof MemoryRoute
+  '/new': typeof NewRoute
   '/api/health': typeof ApiHealthRoute
   '/api/stats': typeof ApiStatsRoute
   '/api/incidents/analyze': typeof ApiIncidentsAnalyzeRoute
@@ -103,6 +148,11 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/analysis'
+    | '/history'
+    | '/learning'
+    | '/memory'
+    | '/new'
     | '/api/health'
     | '/api/stats'
     | '/api/incidents/analyze'
@@ -114,6 +164,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/analysis'
+    | '/history'
+    | '/learning'
+    | '/memory'
+    | '/new'
     | '/api/health'
     | '/api/stats'
     | '/api/incidents/analyze'
@@ -125,6 +180,11 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/analysis'
+    | '/history'
+    | '/learning'
+    | '/memory'
+    | '/new'
     | '/api/health'
     | '/api/stats'
     | '/api/incidents/analyze'
@@ -137,6 +197,11 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalysisRoute: typeof AnalysisRoute
+  HistoryRoute: typeof HistoryRoute
+  LearningRoute: typeof LearningRoute
+  MemoryRoute: typeof MemoryRoute
+  NewRoute: typeof NewRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiStatsRoute: typeof ApiStatsRoute
   ApiIncidentsAnalyzeRoute: typeof ApiIncidentsAnalyzeRoute
@@ -154,6 +219,41 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analysis': {
+      id: '/analysis'
+      path: '/analysis'
+      fullPath: '/analysis'
+      preLoaderRoute: typeof AnalysisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/learning': {
+      id: '/learning'
+      path: '/learning'
+      fullPath: '/learning'
+      preLoaderRoute: typeof LearningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/memory': {
+      id: '/memory'
+      path: '/memory'
+      fullPath: '/memory'
+      preLoaderRoute: typeof MemoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/new': {
+      id: '/new'
+      path: '/new'
+      fullPath: '/new'
+      preLoaderRoute: typeof NewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/health': {
@@ -217,6 +317,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalysisRoute: AnalysisRoute,
+  HistoryRoute: HistoryRoute,
+  LearningRoute: LearningRoute,
+  MemoryRoute: MemoryRoute,
+  NewRoute: NewRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiStatsRoute: ApiStatsRoute,
   ApiIncidentsAnalyzeRoute: ApiIncidentsAnalyzeRoute,

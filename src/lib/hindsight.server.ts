@@ -36,7 +36,7 @@ async function call(path: string, init: { method: string; body?: unknown }) {
         "Content-Type": "application/json",
         ...(c.key ? { Authorization: `Bearer ${c.key}` } : {}),
       },
-      body: init.body ? JSON.stringify(init.body) : undefined,
+      body: init.body ? JSON.stringify(init.body) : null,
     });
   } catch (e) {
     throw new HindsightError(`Hindsight unreachable: ${(e as Error).message}`, "unavailable");

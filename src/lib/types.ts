@@ -10,10 +10,10 @@ export interface Incident {
   errorCode: string;
   title: string;
   description: string;
-  symptoms?: string;
-  rootCause?: string;
-  resolution?: string;
-  outcome?: string;
+  symptoms?: string | undefined;
+  rootCause?: string | undefined;
+  resolution?: string | undefined;
+  outcome?: string | undefined;
   status: Status;
   timestamp: string;
 }
@@ -25,16 +25,16 @@ export interface NewIncidentInput {
   severity: Severity;
   errorCode: string;
   description: string;
-  symptoms?: string;
+  symptoms?: string | undefined;
   timestamp: string;
 }
 
 export interface RecalledMemory {
   id: string;
   text: string;
-  incidentId?: string;
-  type?: string;
-  score?: number;
+  incidentId?: string | undefined;
+  type?: string | undefined;
+  score?: number | undefined;
 }
 
 export interface SimilarIncident {
@@ -49,7 +49,7 @@ export interface AnalysisResult {
   current_incident: NewIncidentInput;
   memory_used: boolean;
   memory_status: "ok" | "empty" | "unavailable" | "not_configured";
-  memory_error?: string;
+  memory_error?: string | undefined;
   recall_query: string;
   recalled_memories: RecalledMemory[];
   similar_incidents: SimilarIncident[];
@@ -60,7 +60,7 @@ export interface AnalysisResult {
   confidence: "Low" | "Medium" | "High";
   what_to_check_next: string[];
   explanation: string;
-  generic_response?: string;
+  generic_response?: string | undefined;
 }
 
 export interface ResolveInput {
@@ -72,5 +72,5 @@ export interface ResolveInput {
   service: string;
   environment: string;
   severity: string;
-  timestamp?: string;
+  timestamp?: string | undefined;
 }

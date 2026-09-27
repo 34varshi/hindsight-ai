@@ -35,8 +35,8 @@ export const DEMO_SCENARIO = {
 };
 
 export function incidentToMemoryText(i: {
-  id: string; service: string; environment: string; severity: string; errorCode?: string;
-  description: string; rootCause?: string; resolution?: string; outcome?: string; timestamp: string;
+  id: string; service: string; environment: string; severity: string; errorCode?: string | undefined;
+  description: string; rootCause?: string | undefined; resolution?: string | undefined; outcome?: string | undefined; timestamp: string;
 }) {
   return [
     `Incident ${i.id} (${i.severity}, ${i.environment}) on ${i.service} at ${i.timestamp}.`,

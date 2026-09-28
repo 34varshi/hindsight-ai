@@ -13,29 +13,43 @@ export class HindsightError extends Error {
   }
 }
 
+// API key is read only from the encrypted secret store (never hardcoded).
+const DEFAULT_BASE = "https://api.hindsight.vectorize.io";
+
 function cfg() {
-  const base = process.env["HINDSIGHT_BASE_URL"];
+  const base = process.env["HINDSIGHT_BASE_URL"] || DEFAULT_BASE;
   const key = process.env["HINDSIGHT_API_KEY"];
   const bank = process.env["HINDSIGHT_BANK_ID"] || "incidentmind";
   const ns = process.env["HINDSIGHT_NAMESPACE"] || "default";
-  if (!base) throw new HindsightError("HINDSIGHT_BASE_URL is not configured", "not_configured");
-  return { base: base.replace(/\/+$/, ""), key, prefix: `/v1/${ns}/banks/${encodeURIComponent(bank)}`, bank };
+  if (!key) throw new HindsightError("HINDSIGHT_API_KEY is not configured", "not_configured");
+  return { base: base.replace(/\/+$/, ""), key, ns, prefix: `/v1/${ns}/banks/${encodeURIComponent(bank)}`, bank };
 }
 
 export function hindsightConfigured() {
-  return !!process.env["HINDSIGHT_BASE_URL"];
+  return !!process.env["HINDSIGHT_API_KEY"];
+}
+
+let bankReady: Promise<void> | null = null;
+function ensureBank(c: ReturnType<typeof cfg>) {
+  if (!bankReady) {
+    bankReady = (async () => {
+      const h = { "Content-Type": "application/json", Authorization: `Bearer ${c.key}` };
+      const list = await fetch(`${c.base}/v1/${c.ns}/banks`, { headers: h }).then((r) => r.json()).catch(() => null);
+      if (list?.banks?.some((b: { bank_id: string }) => b.bank_id === c.bank)) return;
+      await fetch(`${c.base}${c.prefix}`, { method: "PUT", headers: h, body: JSON.stringify({ name: c.bank }) }).catch(() => {});
+    })().catch(() => { bankReady = null; });
+  }
+  return bankReady;
 }
 
 async function call(path: string, init: { method: string; body?: unknown }) {
   const c = cfg();
+  await ensureBank(c);
   let res: Response;
   try {
     res = await fetch(`${c.base}${c.prefix}${path}`, {
       method: init.method,
-      headers: {
-        "Content-Type": "application/json",
-        ...(c.key ? { Authorization: `Bearer ${c.key}` } : {}),
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${c.key}` },
       body: init.body ? JSON.stringify(init.body) : null,
     });
   } catch (e) {

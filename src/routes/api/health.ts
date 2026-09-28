@@ -4,13 +4,13 @@ export const Route = createFileRoute("/api/health")({
   server: {
     handlers: {
       GET: async () => {
-        const base = process.env["HINDSIGHT_BASE_URL"];
+        const base = process.env["HINDSIGHT_BASE_URL"] || "https://api.hindsight.vectorize.io";
+        const key = process.env["HINDSIGHT_API_KEY"];
+        const ns = process.env["HINDSIGHT_NAMESPACE"] || "default";
         let hindsight: "connected" | "unavailable" | "not_configured" = "not_configured";
-        if (base) {
+        if (key) {
           try {
-            const r = await fetch(`${base.replace(/\/+$/, "")}/health`, {
-              headers: process.env["HINDSIGHT_API_KEY"] ? { Authorization: `Bearer ${process.env["HINDSIGHT_API_KEY"]}` } : {},
-            });
+            const r = await fetch(`${base.replace(/\/+$/, "")}/v1/${ns}/banks`, { headers: { Authorization: `Bearer ${key}` } });
             hindsight = r.ok ? "connected" : "unavailable";
           } catch { hindsight = "unavailable"; }
         }

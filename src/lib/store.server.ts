@@ -4,12 +4,19 @@ import { DEMO_INCIDENTS } from "./demo-data";
 import type { Incident } from "./types";
 
 const g = globalThis as unknown as { __incidents?: Incident[] };
-export const incidents: Incident[] = (g.__incidents ??= [...DEMO_INCIDENTS]);
+const seeded: Incident[] = DEMO_INCIDENTS.map((i) => ({ ...i, source: "seeded" as const }));
+function dedupe(list: Incident[]) {
+  const seen = new Set<string>();
+  return list.filter((i) => (seen.has(i.id) ? false : (seen.add(i.id), true)));
+}
+export const incidents: Incident[] = (g.__incidents ??= dedupe(seeded));
+// Clean any accidental duplicates left in a long-running process.
+{ const clean = dedupe(incidents); if (clean.length !== incidents.length) incidents.splice(0, incidents.length, ...clean); }
 
 export function upsertIncident(i: Incident) {
   const idx = incidents.findIndex((x) => x.id === i.id);
   if (idx >= 0) incidents[idx] = { ...incidents[idx], ...i };
-  else incidents.unshift(i);
+  else incidents.unshift({ ...i, source: i.source ?? "live" });
 }
 
 export function nextIncidentId() {

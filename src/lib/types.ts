@@ -16,6 +16,7 @@ export interface Incident {
   outcome?: string | undefined;
   status: Status;
   timestamp: string;
+  source?: "seeded" | "live" | undefined;
 }
 
 export interface NewIncidentInput {

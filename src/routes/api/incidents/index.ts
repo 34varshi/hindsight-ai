@@ -23,7 +23,7 @@ export const Route = createFileRoute("/api/incidents/")({
         const d = p.data;
         const inc = {
           ...d, id: d.id || nextIncidentId(), title: d.description.slice(0, 80),
-          status: "Investigating" as const, timestamp: d.timestamp || new Date().toISOString(),
+          status: "Investigating" as const, source: "live" as const, timestamp: d.timestamp || new Date().toISOString(),
         };
         upsertIncident(inc);
         return Response.json({ incident: inc });

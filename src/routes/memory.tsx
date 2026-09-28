@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Brain, Loader2, Search, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { api, fmtDate } from "@/lib/client";
 import type { Incident, RecalledMemory } from "@/lib/types";
-import { Panel, PageHeader, Btn, ErrorNote, MemoryTag, inputCls } from "@/components/im/ui";
+import { Panel, PageHeader, Btn, ErrorNote, MemoryTag, SourceTag, inputCls } from "@/components/im/ui";
 
 export const Route = createFileRoute("/memory")({
   head: () => ({
@@ -32,6 +32,17 @@ function MemoryPage() {
     onError: (e) => toast.error((e as Error).message),
   });
   const byId = new Map((inc.data?.incidents ?? []).map((i) => [i.id, i]));
+  // One row per incident: keep the best-scoring chunk, count the rest as related facts.
+  const rows = useMemo(() => {
+    const groups = new Map<string, { m: RecalledMemory; count: number }>();
+    for (const m of mem.data?.memories ?? []) {
+      const key = m.incidentId ?? `raw:${m.id}`;
+      const g = groups.get(key);
+      if (!g) groups.set(key, { m, count: 1 });
+      else { g.count++; if ((m.score ?? -1) > (g.m.score ?? -1)) g.m = m; }
+    }
+    return [...groups.values()];
+  }, [mem.data]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
@@ -49,20 +60,22 @@ function MemoryPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-                <tr><th className="p-2">Incident ID</th><th className="p-2">Service</th><th className="p-2">Problem</th><th className="p-2">Root Cause</th><th className="p-2">Resolution</th><th className="p-2">Date</th><th className="p-2">Similarity</th></tr>
+                <tr><th className="p-2">Incident ID</th><th className="p-2">Source</th><th className="p-2">Service</th><th className="p-2">Problem</th><th className="p-2">Root Cause</th><th className="p-2">Resolution</th><th className="p-2">Date</th><th className="p-2">Similarity</th><th className="p-2">Facts</th></tr>
               </thead>
               <tbody className="divide-y">
-                {mem.data?.memories.map((m) => {
+                {rows.map(({ m, count }) => {
                   const i = m.incidentId ? byId.get(m.incidentId) : undefined;
                   return (
                     <tr key={m.id} onClick={() => m.incidentId && setSel(m.incidentId)} className="cursor-pointer hover:bg-accent/50">
                       <td className="p-2 font-mono text-xs">{m.incidentId ?? "—"}</td>
+                      <td className="p-2"><SourceTag source={i?.source ?? "live"} /></td>
                       <td className="p-2">{i?.service ?? "—"}</td>
                       <td className="max-w-xs p-2 text-muted-foreground">{i?.errorCode ?? m.text.slice(0, 80)}</td>
                       <td className="max-w-xs p-2">{i?.rootCause ?? <span className="text-xs text-muted-foreground">{m.text.slice(0, 120)}</span>}</td>
                       <td className="max-w-xs p-2 text-muted-foreground">{i?.resolution ?? "—"}</td>
                       <td className="whitespace-nowrap p-2 text-xs text-muted-foreground">{i ? fmtDate(i.timestamp) : "—"}</td>
                       <td className="p-2 font-mono text-xs text-memory">{m.score != null ? m.score.toFixed(2) : query ? "match" : "—"}</td>
+                      <td className="p-2 font-mono text-xs text-muted-foreground">{count}</td>
                     </tr>
                   );
                 })}
@@ -83,7 +96,7 @@ function MemoryDetail({ id, onClose, onPick }: { id: string; onClose: () => void
     <div className="fixed inset-0 z-40 flex justify-end bg-background/60 backdrop-blur-sm" onClick={onClose}>
       <aside className="h-full w-full max-w-lg overflow-auto border-l bg-card p-6 animate-in slide-in-from-right" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between"><h2 className="font-mono text-lg font-semibold">{id}</h2><button onClick={onClose}><X className="h-5 w-5" /></button></div>
-        <div className="mt-2"><MemoryTag /></div>
+        <div className="mt-2 flex gap-1"><MemoryTag />{d.data && <SourceTag source={i?.source ?? "live"} />}</div>
         {d.isLoading ? <Loader2 className="mt-8 h-6 w-6 animate-spin" /> : d.isError ? <div className="mt-4"><ErrorNote>{(d.error as Error).message}</ErrorNote></div> : (
           <div className="mt-5 space-y-4 text-sm">
             {[["Original Incident", i?.description], ["Root Cause", i?.rootCause], ["Resolution", i?.resolution], ["Outcome", i?.outcome]].map(([k, v]) => (

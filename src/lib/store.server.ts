@@ -11,7 +11,9 @@ function dedupe(list: Incident[]) {
 }
 export const incidents: Incident[] = (g.__incidents ??= dedupe(seeded));
 // Clean any accidental duplicates left in a long-running process.
-{ const clean = dedupe(incidents); if (clean.length !== incidents.length) incidents.splice(0, incidents.length, ...clean); }
+{ const clean = dedupe(incidents); if (clean.length !== incidents.length) incidents.splice(0, incidents.length, ...clean);
+  const demoIds = new Set(DEMO_INCIDENTS.map((i) => i.id));
+  for (const i of incidents) i.source ??= demoIds.has(i.id) ? "seeded" : "live"; }
 
 export function upsertIncident(i: Incident) {
   const idx = incidents.findIndex((x) => x.id === i.id);

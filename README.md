@@ -49,19 +49,27 @@ When a new incident arrives, IncidentMind:
 
 ---
 
-## 🧠 Hindsight Memory
+## 🏗️ Architecture
 
-Hindsight by Vectorize is the core memory layer of IncidentMind.
+![IncidentMind Architecture](architecture.png)
 
-### Recall
-
-Before analysing a new incident, IncidentMind searches Hindsight for relevant historical memories.
+### Architecture Flow
 
 ```text
-New Incident
-     ↓
+React UI
+   ↓
+Server API Routes
+   ↓
 Hindsight Recall
-     ↓
-Similar Historical Incidents
-     ↓
-AI Analysis
+   ↓
+Historical Memories
+   ↓
+LLM via AI Gateway
+   ↓
+AI Analysis & Recommendations
+   ↓
+Engineer Confirms Resolution
+   ↓
+Hindsight Retain
+   ↓
+Memory Available for Future Incidents

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { api, fmtDate } from "@/lib/client";
 import type { Incident } from "@/lib/types";
-import { Panel, PageHeader, Badge, inputCls } from "@/components/im/ui";
+import { Panel, PageHeader, Badge, SourceTag, inputCls } from "@/components/im/ui";
 
 export const Route = createFileRoute("/history")({
   head: () => ({
@@ -22,7 +22,7 @@ function History() {
   const q = useQuery({ queryKey: ["incidents"], queryFn: () => api<{ incidents: Incident[] }>("/api/incidents") });
   const [s, setS] = useState(""); const [sev, setSev] = useState(""); const [svc, setSvc] = useState(""); const [st, setSt] = useState(""); const [env, setEnv] = useState("");
   const [sel, setSel] = useState<Incident | null>(null);
-  const all = q.data?.incidents ?? [];
+  const all = useMemo(() => { const seen = new Set<string>(); return (q.data?.incidents ?? []).filter((i) => (seen.has(i.id) ? false : (seen.add(i.id), true))); }, [q.data]);
   const services = [...new Set(all.map((i) => i.service))].sort();
   const rows = useMemo(() => all.filter((i) =>
     (!sev || i.severity === sev) && (!svc || i.service === svc) && (!st || i.status === st) && (!env || i.environment === env) &&
@@ -44,12 +44,12 @@ function History() {
       <Panel>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-left text-xs uppercase tracking-wider text-muted-foreground"><tr>{["ID", "Service", "Severity", "Status", "Root Cause", "Resolution", "Date"].map((h) => <th key={h} className="p-2">{h}</th>)}</tr></thead>
+            <thead className="text-left text-xs uppercase tracking-wider text-muted-foreground"><tr>{["ID", "Source", "Service", "Severity", "Status", "Root Cause", "Resolution", "Date"].map((h) => <th key={h} className="p-2">{h}</th>)}</tr></thead>
             <tbody className="divide-y">
-              {q.isLoading && <tr><td colSpan={7} className="p-6"><div className="h-24 animate-pulse rounded bg-muted" /></td></tr>}
+              {q.isLoading && <tr><td colSpan={8} className="p-6"><div className="h-24 animate-pulse rounded bg-muted" /></td></tr>}
               {rows.map((i) => (
                 <tr key={i.id} className="cursor-pointer hover:bg-accent/50" onClick={() => setSel(i)}>
-                  <td className="p-2 font-mono text-xs">{i.id}</td><td className="p-2">{i.service}</td>
+                  <td className="p-2 font-mono text-xs">{i.id}</td><td className="p-2"><SourceTag source={i.source} /></td><td className="p-2">{i.service}</td>
                   <td className="p-2"><Badge kind={i.severity}>{i.severity}</Badge></td><td className="p-2"><Badge kind={i.status}>{i.status}</Badge></td>
                   <td className="max-w-xs truncate p-2 text-muted-foreground">{i.rootCause ?? "—"}</td>
                   <td className="max-w-xs truncate p-2 text-muted-foreground">{i.resolution ?? "—"}</td>
@@ -65,7 +65,7 @@ function History() {
           <aside className="h-full w-full max-w-lg overflow-auto border-l bg-card p-6 animate-in slide-in-from-right" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between"><h2 className="font-mono text-lg font-semibold">{sel.id}</h2><button onClick={() => setSel(null)}><X className="h-5 w-5" /></button></div>
             <p className="mt-1 font-medium">{sel.title}</p>
-            <div className="mt-2 flex flex-wrap gap-1"><Badge kind={sel.severity}>{sel.severity}</Badge><Badge kind={sel.status}>{sel.status}</Badge><Badge>{sel.environment}</Badge><Badge>{sel.errorCode}</Badge></div>
+            <div className="mt-2 flex flex-wrap gap-1"><Badge kind={sel.severity}>{sel.severity}</Badge><Badge kind={sel.status}>{sel.status}</Badge><Badge>{sel.environment}</Badge><Badge>{sel.errorCode}</Badge><SourceTag source={sel.source} /></div>
             <div className="mt-5 space-y-4 text-sm">
               {[["Service", sel.service], ["Timestamp", fmtDate(sel.timestamp)], ["Description", sel.description], ["Root Cause", sel.rootCause], ["Resolution", sel.resolution], ["Outcome", sel.outcome]].map(([k, v]) => (
                 <div key={k}><div className="text-xs uppercase tracking-wider text-muted-foreground">{k}</div><p className="mt-1">{v || "—"}</p></div>

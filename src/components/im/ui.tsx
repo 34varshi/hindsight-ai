@@ -63,3 +63,9 @@ export function Btn({ className, variant = "primary", ...p }: React.ButtonHTMLAt
 }
 
 export const inputCls = "w-full rounded-md border bg-input/30 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20";
+
+export function SourceTag({ source }: { source?: string | undefined }) {
+  return source === "seeded"
+    ? <span className="inline-flex items-center rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">Seeded Baseline</span>
+    : <span className="inline-flex items-center gap-1 rounded border border-memory/40 bg-memory/10 px-1.5 py-0.5 font-mono text-[11px] text-memory"><Brain className="h-3 w-3" />Live Retained</span>;
+}

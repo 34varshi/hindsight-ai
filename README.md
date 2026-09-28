@@ -1,35 +1,67 @@
-# IncidentMind – AI Incident Response Agent
+# 🧠 IncidentMind – AI Incident Response Agent
 
-An AI incident response agent for DevOps teams. It remembers past incidents with **Hindsight** (by Vectorize): it looks up similar past incidents (recall), analyses the new one with an LLM, and stores confirmed resolutions (retain).
+IncidentMind is an AI-powered incident response agent designed for DevOps teams.
 
-```mermaid
-flowchart LR
-  UI[React UI] -->|POST /api/incidents/analyze| API[Server routes]
-  API -->|recall| H[(Hindsight)]
-  API -->|incident + memories| LLM[LLM via AI Gateway]
-  UI -->|POST /api/incidents/resolve| API -->|retain| H
-```
+It uses **Hindsight by Vectorize** as a persistent memory layer to recall similar historical incidents, provide context-aware analysis, and retain confirmed resolutions for future incidents.
 
-## Endpoints
-`GET /api/health`, `GET|POST /api/incidents`, `POST /api/incidents/analyze`, `POST /api/incidents/resolve`, `GET /api/memory`, `GET /api/memory/{id}`, `POST /api/memory/seed`, `GET /api/stats`
+The core workflow is:
 
-## Hindsight
-- Recall: `POST {HINDSIGHT_BASE_URL}/v1/{ns}/banks/{bank}/memories/recall`
-- Retain: `POST .../memories`
-- List: `GET .../memories/list`
+**Incident → Recall → Analyze → Resolve → Retain → Learn**
 
-These are set in `src/lib/hindsight.server.ts`. If Hindsight can't be reached, the app says so. It never pretends a lookup worked.
+---
 
-## Setup
-Copy `.env.example` and set `HINDSIGHT_BASE_URL` and `HINDSIGHT_API_KEY`. Then run `bun install && bun run dev`.
+## 🎯 Problem
 
-## Demo
-1. Open Memory and click **Seed historical incidents**.
-2. On the Dashboard, click **Demo Mode**, then **Analyze Incident**.
-3. Resolve the incident and click **Save to Hindsight Memory**.
-4. Submit a similar incident. The new memory is recalled.
+DevOps teams often face recurring incidents such as:
 
-## Future improvements
-- Store incidents in a database so the list survives restarts.
-- Add team sign-in.
-- Add Slack and PagerDuty integrations.
+- HTTP 503 errors
+- Database connection pool exhaustion
+- Redis timeouts
+- Authentication failures
+- API latency and service failures
+
+Traditional incident-response systems often treat each incident independently.
+
+IncidentMind uses historical incident memory so that a new incident can benefit from previously resolved problems and their solutions.
+
+---
+
+## 💡 Solution
+
+IncidentMind combines:
+
+- 🤖 AI-powered incident analysis
+- 🧠 Hindsight persistent memory
+- 🔍 Similar incident retrieval
+- 📊 Incident history and analytics
+- 💡 Context-aware recommendations
+- 🔄 Continuous learning from confirmed resolutions
+
+When a new incident arrives, IncidentMind:
+
+1. Receives the incident details.
+2. Recalls similar incidents from Hindsight.
+3. Provides the incident and recalled memories to the AI.
+4. Generates possible root causes and recommended actions.
+5. Allows the engineer to confirm the actual resolution.
+6. Retains the confirmed resolution in Hindsight.
+7. Uses that experience when similar incidents occur again.
+
+---
+
+## 🧠 Hindsight Memory
+
+Hindsight by Vectorize is the core memory layer of IncidentMind.
+
+### Recall
+
+Before analysing a new incident, IncidentMind searches Hindsight for relevant historical memories.
+
+```text
+New Incident
+     ↓
+Hindsight Recall
+     ↓
+Similar Historical Incidents
+     ↓
+AI Analysis

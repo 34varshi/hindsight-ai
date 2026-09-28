@@ -32,17 +32,45 @@ function MemoryPage() {
     onError: (e) => toast.error((e as Error).message),
   });
   const byId = new Map((inc.data?.incidents ?? []).map((i) => [i.id, i]));
-  // One row per incident: keep the best-scoring chunk, count the rest as related facts.
+  // One row per valid incident: hide chunks without an incident ID and test artifacts
+  // whose incident isn't known to this app. Best-scoring chunk wins; others count as facts.
   const rows = useMemo(() => {
-    const groups = new Map<string, { m: RecalledMemory; count: number }>();
+    const groups = new Map<string, { m: RecalledMemory; count: number; inc: Incident }>();
     for (const m of mem.data?.memories ?? []) {
-      const key = m.incidentId ?? `raw:${m.id}`;
-      const g = groups.get(key);
-      if (!g) groups.set(key, { m, count: 1 });
+      const inc = m.incidentId ? byId.get(m.incidentId) : undefined;
+      if (!m.incidentId || !inc) continue;
+      const g = groups.get(m.incidentId);
+      if (!g) groups.set(m.incidentId, { m, count: 1, inc });
       else { g.count++; if ((m.score ?? -1) > (g.m.score ?? -1)) g.m = m; }
     }
-    return [...groups.values()];
-  }, [mem.data]);
+    return [...groups.values()].sort((x, y) => (y.m.score ?? 0) - (x.m.score ?? 0) || x.inc.id.localeCompare(y.inc.id));
+  }, [mem.data, inc.data]);
+  const seededRows = rows.filter((r) => r.inc.source === "seeded");
+  const liveRows = rows.filter((r) => r.inc.source !== "seeded");
+  const table = (list: typeof rows, empty: string) => list.length === 0 ? <p className="text-sm text-muted-foreground">{empty}</p> : (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead className="text-left text-xs uppercase tracking-wider text-muted-foreground">
+          <tr>{["Incident ID", "Source", "Service", "Problem", "Root Cause", "Resolution", "Date", "Similarity", "Facts"].map((h) => <th key={h} className="p-2">{h}</th>)}</tr>
+        </thead>
+        <tbody className="divide-y">
+          {list.map(({ m, count, inc: i }) => (
+            <tr key={i.id} onClick={() => setSel(i.id)} className="cursor-pointer hover:bg-accent/50">
+              <td className="p-2 font-mono text-xs">{i.id}</td>
+              <td className="p-2"><SourceTag source={i.source} /></td>
+              <td className="p-2">{i.service}</td>
+              <td className="max-w-xs p-2 text-muted-foreground">{i.errorCode || i.title}</td>
+              <td className="max-w-xs p-2">{i.rootCause ?? "—"}</td>
+              <td className="max-w-xs p-2 text-muted-foreground">{i.resolution ?? "—"}</td>
+              <td className="whitespace-nowrap p-2 text-xs text-muted-foreground">{fmtDate(i.timestamp)}</td>
+              <td className="p-2 font-mono text-xs text-memory">{m.score != null ? m.score.toFixed(2) : query ? "match" : "—"}</td>
+              <td className="p-2 font-mono text-xs text-muted-foreground">{count}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
@@ -53,37 +81,16 @@ function MemoryPage() {
         <Btn><Search className="h-4 w-4" />Recall</Btn>
       </form>
       {mem.isError && <ErrorNote>{(mem.error as Error).message}</ErrorNote>}
-      <Panel title={query ? `Recall results for “${query}”` : "Stored memories"} icon={<Brain className="h-4 w-4 text-memory" />} tone="memory">
-        {mem.isLoading ? <div className="h-40 animate-pulse rounded bg-muted" /> : mem.data?.memories.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No memories yet. Use “Seed historical incidents” or resolve an incident to retain one.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-                <tr><th className="p-2">Incident ID</th><th className="p-2">Source</th><th className="p-2">Service</th><th className="p-2">Problem</th><th className="p-2">Root Cause</th><th className="p-2">Resolution</th><th className="p-2">Date</th><th className="p-2">Similarity</th><th className="p-2">Facts</th></tr>
-              </thead>
-              <tbody className="divide-y">
-                {rows.map(({ m, count }) => {
-                  const i = m.incidentId ? byId.get(m.incidentId) : undefined;
-                  return (
-                    <tr key={m.id} onClick={() => m.incidentId && setSel(m.incidentId)} className="cursor-pointer hover:bg-accent/50">
-                      <td className="p-2 font-mono text-xs">{m.incidentId ?? "—"}</td>
-                      <td className="p-2"><SourceTag source={i?.source ?? "live"} /></td>
-                      <td className="p-2">{i?.service ?? "—"}</td>
-                      <td className="max-w-xs p-2 text-muted-foreground">{i?.errorCode ?? m.text.slice(0, 80)}</td>
-                      <td className="max-w-xs p-2">{i?.rootCause ?? <span className="text-xs text-muted-foreground">{m.text.slice(0, 120)}</span>}</td>
-                      <td className="max-w-xs p-2 text-muted-foreground">{i?.resolution ?? "—"}</td>
-                      <td className="whitespace-nowrap p-2 text-xs text-muted-foreground">{i ? fmtDate(i.timestamp) : "—"}</td>
-                      <td className="p-2 font-mono text-xs text-memory">{m.score != null ? m.score.toFixed(2) : query ? "match" : "—"}</td>
-                      <td className="p-2 font-mono text-xs text-muted-foreground">{count}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Panel>
+      {mem.isLoading || inc.isLoading ? <div className="h-40 animate-pulse rounded bg-muted" /> : (
+        <>
+          <Panel title={`Live Retained${query ? ` · recall “${query}”` : ""} (${liveRows.length})`} icon={<Brain className="h-4 w-4 text-memory" />} tone="memory">
+            {table(liveRows, "No live memories yet. Resolve an incident and save it to Hindsight to see it here.")}
+          </Panel>
+          <Panel title={`Seeded Baseline${query ? ` · recall “${query}”` : ""} (${seededRows.length})`} icon={<Brain className="h-4 w-4 text-muted-foreground" />}>
+            {table(seededRows, "No seeded memories found. Use “Seed historical incidents” to load them.")}
+          </Panel>
+        </>
+      )}
       {sel && <MemoryDetail id={sel} onClose={() => setSel(null)} onPick={setSel} />}
     </div>
   );
